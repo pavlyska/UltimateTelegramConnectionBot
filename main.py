@@ -1,6 +1,5 @@
 from config import *
 
-
 # Инициализация бота
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -35,8 +34,8 @@ def forward_message_to_admin(message):
         bot.reply_to(message, "Произошла ошибка при отправке сообщения. Попробуйте позже.")
         print(f"Ошибка: {e}")
 
-# Обработчик ответов администратора
-@bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID, content_types=['text'])
+# Обработчик ответов администратора (все типы контента)
+@bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID, content_types=['text', 'photo', 'video', 'document', 'audio', 'voice'])
 def reply_to_user(message):
     try:
         # Проверяем, является ли сообщение администратора ответом на другое сообщение
@@ -44,8 +43,21 @@ def reply_to_user(message):
             original_message_id = message.reply_to_message.message_id
             if original_message_id in message_to_user:
                 user_id = message_to_user[original_message_id]
-                # Отправляем ответ пользователю
-                bot.send_message(chat_id=user_id, text=f"OTVET\n{message.text}")
+                
+                # Отправляем ответ пользователю в зависимости от типа контента
+                if message.content_type == 'text':
+                    bot.send_message(chat_id=user_id, text=f"{OTVET}\n{message.text}")
+                elif message.content_type == 'photo':
+                    bot.send_photo(chat_id=user_id, photo=message.photo[-1].file_id, caption=f"{OTVET}\n{message.caption}" if message.caption else OTVET)
+                elif message.content_type == 'video':
+                    bot.send_video(chat_id=user_id, video=message.video.file_id, caption=f"{OTVET}\n{message.caption}" if message.caption else OTVET)
+                elif message.content_type == 'document':
+                    bot.send_document(chat_id=user_id, document=message.document.file_id, caption=f"{OTVET}\n{message.caption}" if message.caption else OTVET)
+                elif message.content_type == 'audio':
+                    bot.send_audio(chat_id=user_id, audio=message.audio.file_id, caption=f"{OTVET}\n{message.caption}" if message.caption else OTVET)
+                elif message.content_type == 'voice':
+                    bot.send_voice(chat_id=user_id, voice=message.voice.file_id)
+                
                 bot.reply_to(message, AREPLY)
             else:
                 bot.reply_to(message, AEROR)
